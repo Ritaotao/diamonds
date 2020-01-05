@@ -42,46 +42,57 @@ class Diamonds:
 
     def download(self):
         landing_page = requests.get(self.HOME_URL)
+        i = 0
         while True:
             try:
                 response = requests.get(self.API_URL, self.params, cookies=landing_page.cookies)
             except:
                 # if timeout
-                time.sleep(60*30)
+                time.sleep(30)
                 next
             if not response.ok:
                 # if server disconnected
-                time.sleep(60*30)
+                time.sleep(30)
             else:
-                time.sleep(60*4)
+                time.sleep(4)
                 next
 
-            d = json.loads(response.text)
-            for i in range(len(d['results'])):
-                p = d['results'][i]['price']
-                d['results'][i]['price'] = _price_to_int(p)
-            max_price, min_price = d['results'][-1]['price'], d['results'][0]['price']
+            try:
+                d = json.loads(response.text)
+                # new: return data all wrapped in a list - so always extract first element
+                min_price = _price_to_int(d['results'][0]['price'][0])
+                max_price = _price_to_int(d['results'][-1]['price'][0])
+            except Exception as e:
+                print(response.text)
+                print(e)
+                next
 
-            last_page = params['pageSize'] >= d['countRaw']
+            last_page = self.params['pageSize'] >= d['countRaw']
+            print("Number of remaining: {}".format(d['countRaw']))
             if last_page:
                 self.result += d['results']
                 break
             else:
-                assert min_price < max_price, 'There are over {} diamonds with these characteristics at this price {} and up.' % (params['pageSize'], min_price)
+                assert min_price < max_price, 'Min price bigger than max price'
                 # only add diamonds with price lower than max
-                self.result += [x for x in d['results'] if x['price'] < max_price]
+                self.result += [x for x in d['results'] if _price_to_int(x['price'][0]) < max_price]
                 self.params['minPrice'] = max_price
+                i += 1
+                print("Iter {}: added {} diamonds".format(i, len(self.result)))
         print("Complete: downloaded {} diamonds for given characteristics.".format(len(self.result)))
 
     def clean(self):
         # Put the data into a data frame.
         df = pd.DataFrame(self.result)
+        df = df.applymap(lambda x: x[0] if isinstance(x, list) else x)
 
         # Clean up the data.
         for col in ['carat', 'depth', 'lxwRatio', 'table']:
             df[col] = df[col].map(lambda s: s.replace(',', '')).astype(float)
         for col in ['price', 'pricePerCarat']:
             df[col] = df[col].map(_price_to_int)
+        for col in ['cut', 'measurements']:
+            df[col] = df[col].map(lambda s: s['label'])
         print("Complete: cleaned diamonds data and convert to pandas DataFrame.")
         self.df = df
 
