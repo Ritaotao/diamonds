@@ -2,12 +2,13 @@
     This script is created by https://github.com/amarder/diamonds/blob/master/download.py
 
 """
+import os
 import re
 import json
 import time
 import requests
 import pandas as pd
-
+from datetime import datetime
 
 def _price_to_int(s):
     return int(re.sub('[$,]', '', s))
@@ -41,6 +42,8 @@ class Diamonds:
         self.params.update(params)
 
     def download(self):
+        # may run into sslerror issue in this step, in case that happens, 
+        # reinstall requests package with a different version
         landing_page = requests.get(self.HOME_URL)
         i = 0
         while True:
@@ -124,14 +127,21 @@ if __name__ == '__main__':
     }
     # here is what actually queried
     required_params = {
-        'shape': 'RD'
+        'shape': 'RD',
+        'minPrice': 10000,
+        'maxPrice': 30000
     }
+
+    current_date = datetime.today().strftime('%Y%m%d')
+    work_dir = '/Users/ruitao/WorkDocs/Code/diamonds/data/{}/'.format(current_date)
+    if not os.path.exists(work_dir):
+        os.makedirs(work_dir)
 
     diamonds = Diamonds()
     diamonds.addParams(required_params)
     diamonds.download()
     diamonds.clean()
-    diamonds.writeCSV('./diamonds.csv')
+    diamonds.writeCSV(os.path.join(work_dir, 'diamonds.csv'))
 
 
 
