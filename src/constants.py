@@ -1,6 +1,6 @@
 import os
 
-ROOT_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 # DATA
 DATA_PATH = os.path.join(ROOT_DIR, 'data/diamonds.csv')
 # MODEL
