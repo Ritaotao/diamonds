@@ -81,7 +81,7 @@ scikit-learn==0.23.1
 scipy==1.5.0
 seaborn==0.10.1
 Send2Trash==1.5.0
-setuptools==49.2.0.post20200714
+setuptools
 six==1.15.0
 streamlit==0.63.1
 tensorboard==2.0.0
