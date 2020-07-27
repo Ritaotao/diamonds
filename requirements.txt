@@ -22,27 +22,27 @@ enum-compat==0.0.3
 gast==0.2.2
 google-pasta==0.2.0
 grpcio==1.16.1
-h5py @ file:///opt/concourse/worker/volumes/live/09cb9b5c-fac0-4b8e-4a2a-844fb10f14cb/volume/h5py_1593454153886/work
+h5py==2.10.0
 idna==2.10
-importlib-metadata @ file:///opt/concourse/worker/volumes/live/c15100a6-3aca-4bde-70bd-9279a634b55b/volume/importlib-metadata_1593446478014/work
-ipykernel @ file:///opt/concourse/worker/volumes/live/85dd2405-d290-4882-62b3-bebeb0d1ca60/volume/ipykernel_1594755373565/work/dist/ipykernel-5.3.2-py3-none-any.whl
-ipython @ file:///opt/concourse/worker/volumes/live/8c453bb6-500b-4747-778c-a236ae4a574d/volume/ipython_1593447395779/work
+importlib-metadata==1.7.0
+ipykernel==5.3.2
+ipython==7.16.1
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
-jedi @ file:///opt/concourse/worker/volumes/live/e6f84406-1fad-482f-62d9-34c207744fff/volume/jedi_1592841896228/work
+jedi==0.17.1
 Jinja2==2.11.2
 jmespath==0.10.0
-joblib @ file:///tmp/build/80754af9/joblib_1594236160679/work
+joblib==0.16.0
 jsonschema==3.2.0
-jupyter-client @ file:///tmp/build/80754af9/jupyter_client_1594826976318/work
+jupyter-client==6.1.6
 jupyter-core==4.6.3
 Keras==2.3.1
-Keras-Applications @ file:///tmp/build/80754af9/keras-applications_1594366238411/work
+Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.0
 kiwisolver==1.2.0
 Markdown==3.1.1
 MarkupSafe==1.1.1
-matplotlib @ file:///opt/concourse/worker/volumes/live/8bf90420-8b2f-40f2-5cf1-001960d57523/volume/matplotlib-base_1592846055555/work
+matplotlib==3.2.2
 mistune==0.8.4
 mkl-fft==1.1.0
 mkl-random==1.1.1
@@ -53,14 +53,15 @@ notebook==6.0.3
 numpy==1.18.5
 opt-einsum==3.1.0
 packaging==20.4
-pandas @ file:///opt/concourse/worker/volumes/live/18a2b361-ca01-439e-799c-26ae586e114f/volume/pandas_1592841668631/work
+pandas==1.0.5
 pandocfilters==1.4.2
 parso==0.7.0
 pathtools==0.1.2
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==7.2.0
-plotly @ file:///tmp/build/80754af9/plotly_1593522991827/work
+pip==20.1.1
+plotly==4.8.2
 prometheus-client==0.8.0
 prompt-toolkit==3.0.5
 protobuf==3.12.3
@@ -77,10 +78,11 @@ pyzmq==19.0.1
 requests==2.24.0
 retrying==1.3.3
 s3transfer==0.3.3
-scikit-learn @ file:///opt/concourse/worker/volumes/live/ebc02d84-74dd-49ee-6dd3-7bca233ec59d/volume/scikit-learn_1592856308046/work
-scipy @ file:///opt/concourse/worker/volumes/live/5de63de1-ebe3-42a0-667e-ce551df4774f/volume/scipy_1592940143707/work
+scikit-learn==0.23.1
+scipy==1.5.0
 seaborn==0.10.1
 Send2Trash==1.5.0
+setuptools==49.2.0.post20200714
 six==1.15.0
 streamlit==0.63.1
 tensorboard==2.0.0
@@ -89,7 +91,7 @@ tensorflow-estimator==2.0.0
 termcolor==1.1.0
 terminado==0.8.3
 testpath==0.4.4
-threadpoolctl @ file:///tmp/tmp9twdgx9k/threadpoolctl-2.1.0-py3-none-any.whl
+threadpoolctl==2.1.0
 toml==0.10.1
 toolz==0.10.0
 tornado==6.0.4
@@ -98,9 +100,10 @@ tzlocal==2.1
 urllib3==1.25.9
 validators==0.16.0
 watchdog==0.10.3
-wcwidth @ file:///tmp/build/80754af9/wcwidth_1593447189090/work
+wcwidth==0.2.5
 webencodings==0.5.1
 Werkzeug==1.0.1
+wheel==0.34.2
 widgetsnbextension==3.5.1
 wrapt==1.12.1
 zipp==3.1.0
