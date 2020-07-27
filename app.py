@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 
-from app.constants import DATA_PATH, map_fluorescence, fluorescence, ranking
-from app.inference import predict
+from src.constants import DATA_PATH, map_fluorescence, fluorescence, ranking
+from src.inference import predict
 
 @st.cache
 def load_data(file_path):
