@@ -1,8 +1,6 @@
 import os
-from pathlib import Path
 
-ROOT_DIR = '/Users/ruitao/WorkDocs/Code/diamonds/data/{}/'
-ROOT_DIR = Path(__file__).parent / "../"
+ROOT_DIR = os.path.dirname(__file__)
 # DATA
 DATA_PATH = os.path.join(ROOT_DIR, 'data/diamonds.csv')
 # MODEL
