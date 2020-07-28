@@ -11,13 +11,15 @@ from src.inference import predict
 @st.cache
 def load_data(file_path):
     df = pd.read_csv(file_path)
-    df.drop(columns=['dateSet', 'strikethroughPrice', 'skus', 
-                     'shapeCode', 'imageUrl', 'detailsPageUrl', 'v360BaseUrl'], inplace=True)
+    df.drop(columns=['dateSet', 'strikethroughPrice', 'skus', 'v360BaseUrl',
+                     'shapeCode', 'imageUrl', 'detailsPageUrl'], inplace=True)
     df.drop_duplicates(inplace=True)
+    # keep only diamonds with images
+    df.dropna(subset=['visualizationImageUrl'], inplace=True)
     # reduce fluorescence options
     df['fluorescence'] = df['fluorescence'].map(map_fluorescence)
     # predict diamonds price using trained model
-    df['predicted_price'] = np.round(predict(df))
+    df['predicted_price'] = predict(df).astype(int)
     # compute difference and sort in descending order by (predicted_price - actual_price)
     df['estimate_difference'] = df['predicted_price'] - df['price']
     df.sort_values(by=['estimate_difference'], ascending=False, inplace=True)
@@ -25,16 +27,17 @@ def load_data(file_path):
 data = load_data(DATA_PATH)
 
 # HEADER
-st.title('Simple Diamond Selector')
-st.write('Currently only explore Round diamonds within price range of $10K and $30K.')
-st.write('Latest model has a mean absolute error of $572 on test set.')
-st.write('However, the model shows the biggest erros around borders of the price range.')
+st.title('💎Simple Diamond Selector💎')
+st.write('Welcome :wave: Currently we only consider **Round** diamonds within price range of *$10K and $30K*. The latest model has a mean absolute error of *$572* on test set. The model shows the biggest errors around borders of the price range.')
+st.write('*Please also note:* we found the model predicts very high price on some diamonds while actual price is low, due to additional assessments provided by the GIA reports.')
+st.write('*Dataset Date: 2020-07-20*')
+st.write('---')
 
 
 # SIDEBAR
 # Add a slider
 st.sidebar.title("Options")
-st.sidebar.info("Use this section to filter down diamonds on the plot.")
+st.sidebar.info("Use this section to filter down diamonds.")
 
 carat_filter = st.sidebar.slider(
     label='Carat',
@@ -60,7 +63,7 @@ fluorescence_filter = st.sidebar.multiselect(
     default=fluorescence[-1:]
 )
 top_n_annotation = st.sidebar.slider(
-    label='Show Top N Annotations',
+    label='Show Top N Recommendations',
     min_value=1, max_value=10, value=5, step=1
 )
 
@@ -75,27 +78,37 @@ filtered_data = data[
 
 HOVER_DATA = ['cut', 'fluorescence', 'polish', 'symmetry', 'table', 'predicted_price']  
 
-
 # MAIN CANVAS
 # Scatterplot
+st.write("Number of diamonds in selection: ", filtered_data.shape[0], '(Showing top: ', top_n_annotation, ')')
+
 fig = px.scatter(filtered_data, x='carat', y='price', 
     symbol='clarity', color='color',
     hover_name='id',
     hover_data=HOVER_DATA
 )
+
 for n in range(top_n_annotation):
-    x, y, id, pp, ed = filtered_data[['carat', 'price', 'id', 'predicted_price', 
-                                  'estimate_difference']].iloc[n].values
+    row = filtered_data.iloc[n]
+    x, y, id, pp, ed, image = row[['carat', 'price', 'id', 'predicted_price', 
+                                   'estimate_difference', 'visualizationImageUrl']].values
+    url = 'https://www.bluenile.com/diamond-details/{}'.format(id)
+    # other attributes
+    color, clarity, cut, fluorescence = row[['color', 'clarity', 'cut', 'fluorescence']].values
     fig.add_annotation(
         x=x,
         y=y,
-        text="Estimate: <a href='https://www.bluenile.com/diamond-details/{}'>${}(+{})</a>".format(id, int(pp), int(ed))
+        text="<a href='{}'>${}(+{})</a>".format(url, y, ed)
     )
+    st.write(
+        '[![image]({})]({})'.format(image, url),
+        'Carat: {}, Price: ${}; Suggested: ${}'.format(x, y, pp),
+        '  \nID: [{}]({}) Color **{}**, Clarity **{}**, Cut **{}**, Fluorescence **{}**'.format(id, url, color, clarity, cut, fluorescence))
 
-
+st.markdown('---')
+st.subheader('Diamonds on one Scatterplot')
+st.markdown("My wife really doesn't like this chart. She said it is confusing, and unless I explained to her what is going on, she could not understand anything here. I tried to convince her this is a good summary of the information, but fine, it's alright.")
 st.plotly_chart(fig, use_container_width=True)
-
-st.write("Number of diamonds on the plot: ", filtered_data.shape[0])
 
 if st.checkbox('Show raw data'):
     st.subheader('Raw data')
