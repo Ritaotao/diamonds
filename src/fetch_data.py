@@ -2,13 +2,41 @@
     This script is created by https://github.com/amarder/diamonds/blob/master/download.py
 
 """
-import os
-import re
+import os, re, time
+import glob
 import json
-import time
 import requests
 import pandas as pd
 from datetime import datetime
+
+# just a referrence for param options
+param_options = {
+    'shape': [
+        "RD",  # round
+        "PR",  # princess
+        "EC",  # emerald
+        "AS",  # asscher
+        "CU",  # cushion
+        "MQ",  # marquise
+        "RA",  # radiant
+        "OV",  # oval
+        "PS",  # pear
+        "HS",  # heart
+    ],
+    # ascending order (replace min with max)
+    'minCut': ['Good', 'Very Good', 'Ideal', 'Signature Ideal'],
+    'minColor': ['J', 'I', 'H', 'G', 'F', 'E', 'D'],
+    'minClarity': ['SI2', 'SI1', 'VS2', 'VS1', 'VVS2', 'VVS1', 'IF', 'FL'],
+    'minPrice': 0, #int
+    'minCarat': 50., #float
+}
+# here is what actually queried
+required_params = {
+    'shape': 'RD',
+    'minPrice': 10000,
+    'maxPrice': 30000
+}
+
 
 def _price_to_int(s):
     return int(re.sub('[$,]', '', s))
@@ -28,6 +56,7 @@ class Diamonds:
     def __init__(self):
         self.result = []
         self.df = None
+        self.complete = False
         self.params = {
             'startIndex': 0,
             'pageSize': 1000,
@@ -98,50 +127,45 @@ class Diamonds:
             df[col] = df[col].map(lambda s: s['label'])
         print("Complete: cleaned diamonds data and convert to pandas DataFrame.")
         self.df = df
+        self.complete = True
 
     def writeCSV(self, path):
         self.df.to_csv(path, index=False)
         print("Complete: write to {}.".format(path))
 
-if __name__ == '__main__':
-    # just a referrence for param options
-    param_options = {
-        'shape': [
-            "RD",  # round
-            "PR",  # princess
-            "EC",  # emerald
-            "AS",  # asscher
-            "CU",  # cushion
-            "MQ",  # marquise
-            "RA",  # radiant
-            "OV",  # oval
-            "PS",  # pear
-            "HS",  # heart
-        ],
-        # ascending order (replace min with max)
-        'minCut': ['Good', 'Very Good', 'Ideal', 'Signature Ideal'],
-        'minColor': ['J', 'I', 'H', 'G', 'F', 'E', 'D'],
-        'minClarity': ['SI2', 'SI1', 'VS2', 'VS1', 'VVS2', 'VVS1', 'IF', 'FL'],
-        'minPrice': 0, #int
-        'minCarat': 50., #float
-    }
-    # here is what actually queried
-    required_params = {
-        'shape': 'RD',
-        'minPrice': 10000,
-        'maxPrice': 30000
-    }
 
+def update_data(data_dir):
+    """
+        Download Diamonds data and clean historical data
+        In case update failed, use the last existing csv file
+        Return: 
+            1) (string) new data file path
+            2) (string): download status
+    """
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    
     current_date = datetime.today().strftime('%Y%m%d')
-    work_dir = os.path.join(os.path.dirname(__file__), 'data', current_date)
-    if not os.path.exists(work_dir):
-        os.makedirs(work_dir)
-
-    diamonds = Diamonds()
-    diamonds.addParams(required_params)
-    diamonds.download()
-    diamonds.clean()
-    diamonds.writeCSV(os.path.join(work_dir, 'diamonds.csv'))
-
-
+    output_path = os.path.join(data_dir, 'diamonds_{}.csv'.format(current_date))
+    resp = ''
+    if os.path.exists(output_path):
+        resp = 'Diamonds data is already the latest copy: {}.'.format(current_date)
+    else:
+        # download diamonds data set
+        diamonds = Diamonds()
+        diamonds.addParams(required_params)
+        diamonds.download()
+        diamonds.clean()
+        oldfile_list = glob.glob(os.path.join(data_dir, "*.csv"))
+        if diamonds.complete:
+            # remove older data files
+            for f in oldfile_list:
+                os.remove(f)
+            diamonds.writeCSV(output_path)
+            resp = 'Diamond data is updated to: {}.'.format(current_date)
+        else:
+            output_path = oldfile_list[-1]
+            resp = 'Dimond data download for {} failed, use {} by default.'.format(current_date, output_path)
+    print(resp)
+    return output_path, resp
 

@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from pickle import load
-from .constants import (DATA_PATH, MODEL_PATH, MODEL_WEIGHT_PATH, MODEL_SCALER_PATH, 
+from .constants import (MODEL_PATH, MODEL_WEIGHT_PATH, MODEL_SCALER_PATH, 
                         ranking, fluorescence)
 
 import tensorflow as tf

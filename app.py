@@ -5,11 +5,14 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 
-from src.constants import DATA_PATH, map_fluorescence, fluorescence, ranking
+from src.constants import DATA_DIR, map_fluorescence, fluorescence, ranking
+from src.fetch_data import update_data
 from src.inference import predict
+from src.paginator import paginator
 
 @st.cache
-def load_data(file_path):
+def load_data(data_path):
+    file_path, download_status = update_data(data_path)
     df = pd.read_csv(file_path)
     df.drop(columns=['dateSet', 'strikethroughPrice', 'skus', 'v360BaseUrl',
                      'shapeCode', 'imageUrl', 'detailsPageUrl'], inplace=True)
@@ -23,14 +26,15 @@ def load_data(file_path):
     # compute difference and sort in descending order by (predicted_price - actual_price)
     df['estimate_difference'] = df['predicted_price'] - df['price']
     df.sort_values(by=['estimate_difference'], ascending=False, inplace=True)
-    return df
-data = load_data(DATA_PATH)
+    return df, download_status
+with st.spinner('Retreiving the latest data file...'):
+    data, resp = load_data(DATA_DIR)
+st.info(resp)
 
 # HEADER
 st.title('💎Simple Diamond Selector💎')
-st.write('Welcome :wave: Currently we only consider **Round** diamonds within price range of *$10K and $30K*. The latest model has a mean absolute error of *$572* on test set. The model shows the biggest errors around borders of the price range.')
+st.write('Welcome :wave: Currently we only consider **Round** diamonds with price between *$10K* and *$30K*. The latest model was trained without limiting price range, and has a mean absolute error of *$572* on test set. The model shows the biggest errors around borders of the price range.')
 st.write('*Please also note:* we found the model predicts very high price on some diamonds while actual price is low, due to additional assessments provided by the GIA reports.')
-st.write('*Dataset Date: 2020-07-20*')
 st.write('---')
 
 
@@ -62,11 +66,16 @@ fluorescence_filter = st.sidebar.multiselect(
     options=fluorescence,
     default=fluorescence[-1:]
 )
-top_n_annotation = st.sidebar.slider(
-    label='Show Top N Recommendations',
-    min_value=1, max_value=10, value=5, step=1
+sort_image_by = st.sidebar.selectbox(
+    label='Sort diamonds by (descending)',
+    options=('Estimated Difference', 'Predicted Price', 'Actual Price', 'Carat')
 )
-
+SORTCOL_MAP = {
+    'Actual Price': 'price',
+    'Carat': 'carat',
+    'Estimated Difference': 'estimate_difference',
+    'Predicted Price': 'predicted_price'
+}
 
 filtered_data = data[
     (data['carat'] >= carat_filter[0]) & (data['carat'] <= carat_filter[1]) &
@@ -74,36 +83,52 @@ filtered_data = data[
     (data['color'].isin(color_filter)) &
     (data['clarity'].isin(clarity_filter)) &
     (data['fluorescence'].isin(fluorescence_filter))
-]
+].sort_values(by=SORTCOL_MAP[sort_image_by], ascending=False)
 
 HOVER_DATA = ['cut', 'fluorescence', 'polish', 'symmetry', 'table', 'predicted_price']  
 
 # MAIN CANVAS
-# Scatterplot
-st.write("Number of diamonds in selection: ", filtered_data.shape[0], '(Showing top: ', top_n_annotation, ')')
+st.write("Number of diamonds in selection: ", filtered_data.shape[0])
 
+# Settings
+MAIN_COLS = ['carat', 'price', 'id', 'predicted_price', 
+             'estimate_difference', 'visualizationImageUrl']
+ATTR_COLS = ['color', 'clarity', 'cut', 'fluorescence']
+DETAILS_URL = 'https://www.bluenile.com/diamond-details/{}'
+
+
+def extract_row(row):
+    x, y, id, pp, ed, image = row[MAIN_COLS].values
+    color, clarity, cut, fluorescence = row[ATTR_COLS].values
+    url = DETAILS_URL.format(id)
+    return (x, y, id, pp, ed, image, 
+        color, clarity, cut, fluorescence, url)
+
+# Show list of diamonds
+n = filtered_data.shape[0]
+for i, row in paginator("Select a page", list(range(n)), items_per_page=5, on_sidebar=False):
+    row = filtered_data.iloc[i]
+    x, y, id, pp, ed, image, color, clarity, cut, fluorescence, url = extract_row(row)
+    # show list of diamonds
+    st.write(
+        '[![image]({})]({})'.format(image, url),
+        'Carat: {}, Price: ${}; Suggested: ${}'.format(x, y, pp),
+        '  \nID: [{}]({}) Color **{}**, Clarity **{}**, Cut **{}**, Fluorescence **{}**'.format(id, url, color, clarity, cut, fluorescence))
+
+# Base chart
 fig = px.scatter(filtered_data, x='carat', y='price', 
     symbol='clarity', color='color',
     hover_name='id',
     hover_data=HOVER_DATA
 )
-
-for n in range(top_n_annotation):
-    row = filtered_data.iloc[n]
-    x, y, id, pp, ed, image = row[['carat', 'price', 'id', 'predicted_price', 
-                                   'estimate_difference', 'visualizationImageUrl']].values
-    url = 'https://www.bluenile.com/diamond-details/{}'.format(id)
-    # other attributes
-    color, clarity, cut, fluorescence = row[['color', 'clarity', 'cut', 'fluorescence']].values
+# Add annotation to top 5 suggested
+for i in range(5):
+    row = filtered_data.iloc[i]
+    x, y, id, pp, ed, image, color, clarity, cut, fluorescence, url = extract_row(row)
+    # add other attributes to the base chart
     fig.add_annotation(
-        x=x,
-        y=y,
-        text="<a href='{}'>${}(+{})</a>".format(url, y, ed)
+        x=x, y=y, text="<a href='{}'>${}(+{})</a>".format(url, y, ed)
     )
-    st.write(
-        '[![image]({})]({})'.format(image, url),
-        'Carat: {}, Price: ${}; Suggested: ${}'.format(x, y, pp),
-        '  \nID: [{}]({}) Color **{}**, Clarity **{}**, Cut **{}**, Fluorescence **{}**'.format(id, url, color, clarity, cut, fluorescence))
 
 st.markdown('---')
 st.subheader('Diamonds on one Scatterplot')

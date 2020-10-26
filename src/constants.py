@@ -1,8 +1,8 @@
 import os
 
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 # DATA
-DATA_PATH = os.path.join(ROOT_DIR, 'data/diamonds.csv')
+DATA_DIR = os.path.join(ROOT_DIR, 'data')
 # MODEL
 MODEL_DIR = os.path.join(ROOT_DIR, 'model')
 MODEL_PATH = os.path.join(MODEL_DIR, 'my_model.h5')
